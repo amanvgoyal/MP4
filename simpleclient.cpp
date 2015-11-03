@@ -60,7 +60,7 @@ int main(int argc, char * argv[]) {
 
   cout << "Establishing control channel... " << flush;
   RequestChannel chan("control", RequestChannel::CLIENT_SIDE);
-  cout << "done." << endl;;
+  cout << "done." << endl;
 
   /* -- Start sending a sequence of requests */
 

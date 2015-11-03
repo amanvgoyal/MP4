@@ -1,0 +1,14 @@
+#include "semaphore.h"
+
+Semaphore::Semaphore(int _val) {
+
+}
+
+Semaphore::~Semaphore() {
+
+}
+
+// Wait
+Semaphore::P() {
+
+}
