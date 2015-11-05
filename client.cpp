@@ -4,7 +4,9 @@
 //  http://www.radmangames.com/programming/how-to-use-boost-program_options
 
 #include "boost/program_options.hpp" 
+
 #include "semaphore.h"
+#include "BoundedBuffer.h"
 
 #include <iostream> 
 #include <string> 

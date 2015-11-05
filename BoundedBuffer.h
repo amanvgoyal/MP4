@@ -7,7 +7,7 @@
 
 class BoundedBuffer {
  public:
-  BoundedBuffer();
+  BoundedBuffer(int);
   void add(std::string);
   std::string remove();
 
@@ -17,6 +17,6 @@ class BoundedBuffer {
   Semaphore mutex;
   
   std::vector<std::string> data;
-}
+};
 
 #endif
