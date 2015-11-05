@@ -1,0 +1,8 @@
+#ifndef BOUNDED_BUF_H
+#define BOUNDED_BUF_H
+
+class BoundedBuffer {
+
+}
+
+#endif
