@@ -7,11 +7,19 @@
 
 #include "semaphore.h"
 #include "BoundedBuffer.h"
+#include "reqchannel.h"
 
 #include <iostream> 
 #include <string> 
-#include <complex>
+#include <cassert>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <unistd.h>
+
 #include <vector>
+#include <map>
 
 namespace 
 { 
@@ -20,6 +28,12 @@ namespace
   const size_t ERROR_UNHANDLED_EXCEPTION = 2; 
  
 } 
+
+// -------------------------------- Globals ----------------------------------
+std::map<int, int> joe_stat;
+std::map<int, int> john_stat;
+std::map<int, int> jane_stat;
+
  
 int main(int argc, char** argv) 
 { 
@@ -66,8 +80,24 @@ int main(int argc, char** argv)
 	return ERROR_IN_COMMAND_LINE; 
       } 
  
-    // application code here // 
- 
+    // ---------------------- application code here -----------------------
+    const char **argv = new const char* [0]; // nothing in here
+    //int server = execv("./dataserver", (char**) argv);
+    int server = fork();
+    if (server == 0) {execv("./dataserver", (char**) argv);}
+    else {
+      cout << "CLIENT STARTED:" << endl;
+
+      cout << "Establishing control channel... " << flush;
+      RequestChannel chan("control", RequestChannel::CLIENT_SIDE);
+      cout << "done." << endl;
+
+      /* -- Start sending a sequence of requests */
+
+      string reply1 = chan.send_request("hello");
+      cout << "Reply to request 'hello' is '" << reply1 << "'" << endl;
+    }
+
     }
   
   catch(std::exception& e) 
