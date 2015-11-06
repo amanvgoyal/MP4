@@ -34,7 +34,8 @@
 #include <unistd.h>
 
 #include "reqchannel.h"
-#include "Bouded_buffer.H"
+#include "BoundedBuffer.h"
+
 using namespace std;
 
 /*--------------------------------------------------------------------------*/
