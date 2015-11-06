@@ -36,12 +36,23 @@ std::map<int, int> jane_stat;
 
 vector<int> stat_threads;
 vector<int> worker_threads;
+vector<int> request_threads;
 
 BoundedBuffer joe_b;
 BoundedBuffer john_b;
 BoundedBuffer jane_b;
 
+void* stat_thread(void* data) {
 
+}
+
+void* worker_thread(void* data) {
+
+}
+
+void* req_thread(void* data) {
+
+}
  
 int main(int argc, char** argv) 
 { 
