@@ -1,132 +1,195 @@
-// compile w/ g++ -std=c++11 -Wno-write-strings *.cpp  /usr/lib/x86_64-linux-gnu/libboost_program_options.so
+/* 
+    File: simpleclient.C
 
-// Skeleton from: 
-//  http://www.radmangames.com/programming/how-to-use-boost-program_options
+    Author: R. Bettati
+            Department of Computer Science
+            Texas A&M University
+    Date  : 2013/01/31
 
-#include "boost/program_options.hpp" 
+    Simple client main program for MP3 in CSCE 313
+*/
 
-#include "semaphore.h"
-#include "BoundedBuffer.h"
-#include "reqchannel.h"
+/* Refferd to the code of alan chtenberg at https://github.com/alanachtenberg/CSCE-313/blob/master/MP3/client.C */
 
-#include <iostream> 
-#include <string> 
+/*--------------------------------------------------------------------------*/
+/* DEFINES */
+/*--------------------------------------------------------------------------*/
+
+    /* -- (none) -- */
+
+/*--------------------------------------------------------------------------*/
+/* INCLUDES */
+/*--------------------------------------------------------------------------*/
+
 #include <cassert>
+#include <cstring>
+#include <iostream>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdlib.h>
+#include <iomanip>
+#include <sys/time.h>
 
 #include <errno.h>
 #include <unistd.h>
 
-#include <vector>
-#include <map>
+#include "reqchannel.h"
+#include "Bouded_buffer.H"
+using namespace std;
 
-namespace 
-{ 
-  const size_t ERROR_IN_COMMAND_LINE = 1; 
-  const size_t SUCCESS = 0; 
-  const size_t ERROR_UNHANDLED_EXCEPTION = 2; 
- 
-} 
+/*--------------------------------------------------------------------------*/
+/* DATA STRUCTURES */ 
+/*--------------------------------------------------------------------------*/
+	int n = 10000; // number of request
+	int w = 100; // number of worker threads
+	int b = 500; //buffer size
+	
+	int histogram_size = 10000;
+	
+	vector<int> histo_joe(histogram_size);//histogram to store data
+	vector<int> histo_jane(histogram_size);
+	vector<int> histo_john(histogram_size);
 
-// -------------------------------- Globals ----------------------------------
-std::map<int, int> joe_stat;
-std::map<int, int> john_stat;
-std::map<int, int> jane_stat;
+	int joe_req =0;
+	int jane_req =0;
+	int john_req=0;
+	
+	BoundedBuffer* common_buffer; // buffer to hold user requests
+	BoundedBuffer* joe_buffer;
+	BoundedBuffer* jane_buffer;
+	BoundedBuffer* john_buffer;
+		
 
-vector<int> stat_threads;
-vector<int> worker_threads;
-vector<int> request_threads;
+/*--------------------------------------------------------------------------*/
+/* CONSTANTS */
+/*--------------------------------------------------------------------------*/
 
-BoundedBuffer joe_b;
-BoundedBuffer john_b;
-BoundedBuffer jane_b;
+    int* joe=new int(0); // to differnce between thread owner
+	int* jane = new int(1);
+	int* jonh = new int(2);
+	
 
-void* stat_thread(void* data) {
+/*--------------------------------------------------------------------------*/
+/* FUNCTIONS */
+/*--------------------------------------------------------------------------*/
 
-}
+    void show_histogram (vector<int> data, string name){
+		/*int low, high;
+		cout<<"Enter the range you want";
+		cin>>low>>high;
+		if(high>histogram_size || low<0){
+			cout<<"range out of bounds, enter again";
+			cin>>low>>high;
+		}*/
+		
+		for(int i=0 ;i<histogram_size ; ++i )
+			cout<<i<<" - "<<data[i]<<"  ";
+		cout<<endl<<endl;
+	}
+	
+	void* req_th (void* person_id){
+		int req_id = *((int*) person_id);
+		string str;
+		for(int i=0; i<n ; i++)
+		{
+			if(req_id==0){
+				john_req++;
+				str="joe requested";
+				}
+			else if (req_id==1){
+				jane_req++;
+				str="jane requested";
+			}
+			else if (req_id==2)
+			{
+				john_req++;
+				str="john requested";
+			}
+				
+		common_buffer -> add(str);
+			}
+		cout << "All requests completed for request_id="<< req_id<< endl;
+		cout<<"Request thread exiting\n";
+	}
 
-void* worker_thread(void* data) {
+	/*void* worker_thread(void* req_channel){
+		RequestChannel* channel = (RequestChannel*) req_channel;
+		string str1;
+		int counter =0;
+		while(1){
+			str1 = common_buffer -> remove();
+			
+			if(str1 == "kill"){
+				break;
+			}
+			
+			string reply = channel -> send_request(str1);
+			str1 = reply;
+			
+			
+			
+			
+			
+		}
+	}*/
+	
+	void* stat_thread(void* person_id){
+		int req_id = *((int*)person_id);
+		string r;
+		for(int i=0 ; i<n ; ++i){
+			if(req_id ==0){
+				r=joe_buffer->remove();
+				histo_joe[atoi(r.c_str())]+=1;
+				
+			}
+			else if(req_id==1){
+				r=jane_buffer->remove();
+				histo_jane[atoi(r.c_str())]+=1;
+			}
+			else if(req_id==2){
+				r=john_buffer->remove();
+				histo_jane[atoi(r.c_str())]+=1;
+			}
+	
+		}
+		cout<<"stat thread finished : "<<req_id<<endl;
+	}
+	
+/*--------------------------------------------------------------------------*/
+/* MAIN FUNCTION */
+/*--------------------------------------------------------------------------*/
 
-}
+int main(int argc, char * argv[]) {
 
-void* req_thread(void* data) {
+  cout << "CLIENT STARTED:" << endl;
 
-}
- 
-int main(int argc, char** argv) 
-{ 
-  int n; // number of data requests per person
-  int b; // size of bounded buffer in requests
-  int w; // number of worker threads
-  try 
-    { 
-      /** Define and parse the program options 
-       */ 
-      namespace po = boost::program_options; 
-      po::options_description desc("Options"); 
-      desc.add_options() 
-	("help", "Print help messages")
-	(",n", po::value<int>(&n)->required(),
-	 "number of data requests per person")
-	(",b", po::value<int>(&b)->required(), 
-	 "Size of bounded bufffer in requests")
-	(",w", po::value<int>(&w)->required(), 
-	 "number of worker threads");
-      
-      po::variables_map vm; 
-    try 
-      { 
-	po::store(po::parse_command_line(argc, argv, desc),  
-		  vm); // can throw 
- 
-	/** --help option 
-	 */ 
-	if ( vm.count("help")  ) 
-	  { 
-	    std::cout << "MP1 options" << std::endl 
-		      << desc << std::endl; 
-	    return SUCCESS; 
-	  } 
+  cout << "Establishing control channel... " << flush;
+  RequestChannel chan("control", RequestChannel::CLIENT_SIDE);
+  cout << "done." << endl;;
 
-	po::notify(vm); // throws on error, so do after help in case 
-	// there are any problems 
-      } 
-    catch(po::error& e) 
-      { 
-	std::cerr << "ERROR: " << e.what() << std::endl << std::endl; 
-	std::cerr << desc << std::endl; 
-	return ERROR_IN_COMMAND_LINE; 
-      } 
- 
-    // ---------------------- application code here -----------------------
-    const char **argv = new const char* [0]; // nothing in here
-    //int server = execv("./dataserver", (char**) argv);
-    int server = fork();
-    if (server == 0) {execv("./dataserver", (char**) argv);}
-    else {
-      cout << "CLIENT STARTED:" << endl;
+  /* -- Start sending a sequence of requests */
 
-      cout << "Establishing control channel... " << flush;
-      RequestChannel chan("control", RequestChannel::CLIENT_SIDE);
-      cout << "done." << endl;
+  string reply1 = chan.send_request("hello");
+  cout << "Reply to request 'hello' is '" << reply1 << "'" << endl;
 
-      /* -- Start sending a sequence of requests */
+  string reply2 = chan.send_request("data Joe Smith");
+  cout << "Reply to request 'data Joe Smith' is '" << reply2 << "'" << endl;
 
-      string reply1 = chan.send_request("hello");
-      cout << "Reply to request 'hello' is '" << reply1 << "'" << endl;
-    }
+  string reply3 = chan.send_request("data Jane Smith");
+  cout << "Reply to request 'data Jane Smith' is '" << reply3 << "'" << endl;
 
-    }
-  
-  catch(std::exception& e) 
-    { 
-      std::cerr << "Unhandled Exception reached the top of main: " 
-		<< e.what() << ", application will now exit" << std::endl; 
-      return ERROR_UNHANDLED_EXCEPTION; 
- 
-    } 
- 
-  return SUCCESS; 
- 
+  string reply5 = chan.send_request("newthread");
+  cout << "Reply to request 'newthread' is " << reply5 << "'" << endl;
+  RequestChannel chan2(reply5, RequestChannel::CLIENT_SIDE);
+
+  string reply6 = chan2.send_request("data John Doe");
+  cout << "Reply to request 'data John Doe' is '" << reply6 << "'" << endl;
+
+  string reply7 = chan2.send_request("quit");
+  cout << "Reply to request 'quit' is '" << reply7 << "'" << endl;
+
+  string reply4 = chan.send_request("quit");
+  cout << "Reply to request 'quit' is '" << reply4 << "'" << endl;
+
+  usleep(1000000);
 }
