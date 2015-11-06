@@ -34,6 +34,14 @@ std::map<int, int> joe_stat;
 std::map<int, int> john_stat;
 std::map<int, int> jane_stat;
 
+vector<int> stat_threads;
+vector<int> worker_threads;
+
+BoundedBuffer joe_b;
+BoundedBuffer john_b;
+BoundedBuffer jane_b;
+
+
  
 int main(int argc, char** argv) 
 { 
