@@ -187,7 +187,7 @@ int main(int argc, char * argv[]) {
   jane_buf = new BoundedBuffer(b);
   john_buf = new BoundedBuffer(b);
 
-  pthread_t workers[w];
+  pthread_t* workers[w];
   
   int* joe_id = new int(0);
   int* jane_id = new int(1);
@@ -206,13 +206,24 @@ int main(int argc, char * argv[]) {
     cout << "Beginning creation of joe's threads" << endl;
     pthread_create(&joe_req, NULL, req_thread, (void*) joe_id);
     pthread_create(&joe_stat, NULL, stat_thread, (void*) joe_id);
+    cout << "Finished making joe's threads" << endl;
 
     cout << "Beginning creation of jane's threads" << endl;
     pthread_create(&jane_req, NULL, req_thread, (void*) jane_id);
     pthread_create(&jane_stat, NULL, stat_thread, (void*) jane_id);
+    cout << "Finished making jane's threads" << endl;
 
     cout << "Beginning creation of john's threads" << endl;
     pthread_create(&john_req, NULL, req_thread, (void*) john_id);
     pthread_create(&john_stat, NULL, stat_thread, (void*) john_id);
+    cout << "Finished making john's threads" << endl;
+
+    cout << "Beginning to create the " << w << " worker threads." << endl;
+    for (int i = 0; i < w; ++i) {
+      string req_name = chan.send_request("newthread");
+      RequestChannel* chan2 = new RequestChannel(req_name, RequestChannel::CLIENT_SIDE);
+      pthread_create(workers[i], NULL, worker_thread, (void*) chan2);
+    }
+    cout << "Finished making the worker theads." << endl;
   }
 }
