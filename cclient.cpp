@@ -5,19 +5,22 @@
 
 #include "boost/program_options.hpp" 
 
-#include "semaphore.h"
-#include "BoundedBuffer.h"
-#include "reqchannel.h"
-
-#include <iostream> 
-#include <string> 
 #include <cassert>
+#include <cstring>
+#include <iostream>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdlib.h>
+#include <iomanip>
+#include <sys/time.h>
 
 #include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
+
+#include "reqchannel.h"
+#include "BoundedBuffer.h"
+#include "semaphore.h"
 
 #include <vector>
 #include <map>
@@ -31,6 +34,27 @@ namespace
 } 
 
 // -------------------------------- Globals ----------------------------------
+int n; // number of data requests per person
+int b; // size of bounded buffer in requests
+int w; // number of worker threads
+
+int joe_req;
+int jane_req;
+int john_req;
+
+BoundedBuffer* main_buf;
+BoundedBuffer* joe_buf;
+BoundedBuffer* john_buf;
+
+std::map<int, int> joe_hist;
+std::map<int, int> jane_hist;
+std::map<int, int> john_hist;			       
+
+void show_hist(std::map<int, int> m, std::string name) {
+  for (auto& x : m) {
+    std::cout << '(' << x.first << ", " << x.second << ')' << std::endl;
+  }
+}
 
 void* stat_thread(void* data) {
   BoundedBuffer b;
@@ -44,12 +68,9 @@ void* worker_thread(void* data) {
 void* req_thread(void* data) {
 
 }
- 
+  
 int main(int argc, char** argv) 
 { 
-  int n; // number of data requests per person
-  int b; // size of bounded buffer in requests
-  int w; // number of worker threads
   try 
     { 
       /** Define and parse the program options 

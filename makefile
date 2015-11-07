@@ -15,4 +15,7 @@ dataserver: dataserver.cpp reqchannel.o
 	g++-4.7 -g -o dataserver dataserver.cpp reqchannel.o -lpthread
 
 client: client.cpp reqchannel.o semaphore.o BoundedBuffer.o
-	g++-4.7 -g -o client client.cpp reqchannel.o semaphore.o BoundedBuffer.o
+	g++-4.7 -std=c++11 -g -o client client.cpp reqchannel.o semaphore.o BoundedBuffer.o
+
+#client: cclient.cpp reqchannel.o semaphore.o BoundedBuffer.o
+#	g++-4.7 -std=c++11 -g -o client -Wno-write-strings cclient.cpp reqchannel.o semaphore.o BoundedBuffer.o
