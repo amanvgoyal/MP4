@@ -90,16 +90,16 @@ void* req_thread (void* person){
     {
       if(requester == 0) {
 	++joe_req_ct;
-	delivery = "hi from joe";
+	delivery = "data joe";
       }
       else if (requester == 1) {
 	++jane_req_ct;
-	delivery = "hi from jane";
+	delivery = "data jane";
       }
       else if (requester == 2) {
 	{
 	  ++john_req_ct;
-	  delivery = "hi from john";
+	  delivery = "data john";
 	}
 				
 	main_buf->add(delivery);
@@ -116,15 +116,15 @@ void* worker_thread(void* req_channel){
   while(true){
     removal = main_buf->remove();
 
-    if(removal == "kill"){
+    if(removal == "stop"){
       break; ///neeeeeeeeeeeeeeeeeeeeeeeeeeeeeded?
     }		
 
     to_add = chan->send_request(removal);
     
-    if (removal == "hi from joe") {joe_buf->add(to_add);}
-    else if (removal == "hi from jane") {jane_buf->add(to_add);}
-    else if (removal == "hi from john") {john_buf->add(to_add);}
+    if (removal == "data joe") {joe_buf->add(to_add);}
+    else if (removal == "data jane") {jane_buf->add(to_add);}
+    else if (removal == "data john") {john_buf->add(to_add);}
   }
 
   chan->send_request("quit");
@@ -199,9 +199,14 @@ int main(int argc, char * argv[]) {
   
   else {
     cout << "Client started" << endl;
-    cout << "Establishing control channel... " << flush;
+    cout << "Establishing control channel... " << endl; 
+    cout << "Going to check if hello succeeds...\n" << flush;
+
     RequestChannel chan("control", RequestChannel::CLIENT_SIDE);
-    cout << "done" << endl;
+    string reply = chan.send_request("hello");
+
+    cout << reply << endl;
+    cout << "done" << endl << endl;;
 
     cout << "Beginning creation of joe's threads" << endl;
     pthread_create(&joe_req, NULL, req_thread, (void*) joe_id);
@@ -225,5 +230,26 @@ int main(int argc, char * argv[]) {
       pthread_create(workers[i], NULL, worker_thread, (void*) chan2);
     }
     cout << "Finished making the worker theads." << endl;
+
+    for (int i = 0; i < w; ++i) {
+      main_buf->add("stop");
+    }
+
+
+    // Begin joining all threads
+    for (int i = 0; i < w; ++i) {
+      pthread_join(*workers[i], NULL);
+    }
+
+    pthread_join(joe_req, NULL);
+    pthread_join(jane_req, NULL);
+    pthread_join(john_req, NULL);
+
+    pthread_join(joe_stat, NULL);
+    pthread_join(jane_stat, NULL);
+    pthread_join(john_stat, NULL);
+
+    // Finished
+    chan.send_request("quit");
   }
 }
