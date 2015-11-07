@@ -35,6 +35,8 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#include <time.h>
+
 #include <vector>
 #include <map>
 
@@ -51,11 +53,16 @@ int w = 50; // number of worker threads
 int b = 100; //buffer size
 int c;
 
+int joe_req_ct = 0;
+int jane_req_ct = 0;
+int john_req_ct = 0;
+
 map<int, int> joe_hist;
 map<int, int> jane_hist;
 map<int, int> john_hist;
 
 BoundedBuffer* main_buf;
+
 BoundedBuffer* joe_buf;
 BoundedBuffer* jane_buf;
 BoundedBuffer* john_buf;
@@ -68,11 +75,6 @@ pthread_t joe_stat;
 pthread_t jane_stat;
 pthread_t john_stat;
 	
-//int* joe=new int(0); // to differnce between thread owner
-//int* jane = new int(1);
-//int* jonh = new int(2);
-	
-
 void show_histogram (map<int, int> m, string name){
   cout << name << "'s histogram" << endl;
   for (auto x : m) {
@@ -80,65 +82,72 @@ void show_histogram (map<int, int> m, string name){
   }
 }
 	
-void* req_th (void* person_id){
-  int req_id = *((int*) person_id);
-  string str;
-  for(int i=0; i<n ; i++)
+void* req_thread (void* person){
+  int requester = *((int*) person);
+  string delivery;
+
+  for(int i = 0; i < n; i++)
     {
-      if(req_id==0){
-	john_req++;
-	str="joe requested";
+      if(requester == 0) {
+	++joe_req_ct;
+	delivery = "hi from joe";
       }
-      else if (req_id==1){
-	jane_req++;
-	str="jane requested";
+      else if (requester == 1) {
+	++jane_req_ct;
+	delivery = "hi from jane";
       }
-      else if (req_id==2)
+      else if (requester == 2) {
 	{
-	  john_req++;
-	  str="john requested";
+	  ++john_req_ct;
+	  delivery = "hi from john";
 	}
 				
-      main_buf->add(str);
+	main_buf->add(delivery);
+      }
+      cout << "Requester " << requester << " is done." << endl;
     }
-  cout << "All requests completed for request_id="<< req_id<< endl;
-  cout<<"Request thread exiting\n";
 }
 
 void* worker_thread(void* req_channel){
-  RequestChannel* channel = (RequestChannel*) req_channel;
-  string str1;
-  int counter =0;
-  while(1){
-    str1 = main_buf->remove();
-			
-    if(str1 == "kill"){
-      break;
-    }
-			
-    string reply = channel -> send_request(str1);
-    str1 = reply;
+  RequestChannel* chan = (RequestChannel*) req_channel;
+  string removal;
+  string to_add;
+
+  while(true){
+    removal = main_buf->remove();
+
+    if(removal == "kill"){
+      break; ///neeeeeeeeeeeeeeeeeeeeeeeeeeeeeded?
+    }		
+
+    to_add = chan->send_request(removal);
+    
+    if (removal == "hi from joe") {joe_buf->add(to_add);}
+    else if (removal == "hi from jane") {jane_buf->add(to_add);}
+    else if (removal == "hi from john") {john_buf->add(to_add);}
   }
+
+  chan->send_request("quit");
 }
 	
 void* stat_thread(void* person_id){
   int req_id = *((int*)person_id);
-  string r;
+  string removal;
   for(int i = 0 ; i < n ; ++i){
     if(req_id == 0){
-      r = joe_buf->remove();
+      removal = joe_buf->remove();
       //histo_joe[atoi(r.c_str())]+=1;
-      ++joe_hist[atoi(r.c_str())];
+      ++joe_hist[atoi(removal.c_str())];
     }
     else if(req_id == 1){
-      r = jane_buf->remove();
+      removal = jane_buf->remove();
       //histo_jane[atoi(r.c_str())]+=1;
-      ++jane_hist[atoi(r.c_str())];
+      ++jane_hist[atoi(removal.c_str())];
     }
     else if(req_id == 2){
-      r = john_buf->remove();
+      removal = john_buf->remove();
       //histo_jane[atoi(r.c_str())]+=1;
-      ++john_hist[atoi(r.c_str())];
+      ++john_hist[atoi(removal.c_str())];
     }
 	
   }
@@ -173,15 +182,37 @@ int main(int argc, char * argv[]) {
   }
 
   // App code here
+  main_buf = new BoundedBuffer(b);
+  joe_buf = new BoundedBuffer(b);
+  jane_buf = new BoundedBuffer(b);
+  john_buf = new BoundedBuffer(b);
+
+  pthread_t workers[w];
+  
+  int* joe_id = new int(0);
+  int* jane_id = new int(1);
+  int* john_id = new  int(2);
+  
   const char **farg = new const char*[0]; // nothing in here
-  int server = fork();
-  if (server == 0) {execv("./dataserver", (char**) farg);}
+  int pid = fork();
+  if (pid == 0) {execv("./dataserver", (char**) farg);}
   
   else {
     cout << "Client started" << endl;
     cout << "Establishing control channel... " << flush;
     RequestChannel chan("control", RequestChannel::CLIENT_SIDE);
     cout << "done" << endl;
-  }
 
+    cout << "Beginning creation of joe's threads" << endl;
+    pthread_create(&joe_req, NULL, req_thread, (void*) joe_id);
+    pthread_create(&joe_stat, NULL, stat_thread, (void*) joe_id);
+
+    cout << "Beginning creation of jane's threads" << endl;
+    pthread_create(&jane_req, NULL, req_thread, (void*) jane_id);
+    pthread_create(&jane_stat, NULL, stat_thread, (void*) jane_id);
+
+    cout << "Beginning creation of john's threads" << endl;
+    pthread_create(&john_req, NULL, req_thread, (void*) john_id);
+    pthread_create(&john_stat, NULL, stat_thread, (void*) john_id);
+  }
 }
