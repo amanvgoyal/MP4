@@ -1,6 +1,20 @@
 // https://en.wikipedia.org/wiki/Semaphore_(programming)
 // http://pubs.opengroup.org/onlinepubs/007908799/xsh/pthread.h.html
 #include "semaphore.h"
+#include <cassert>
+#include <cstring>
+#include <iostream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <iomanip>
+#include <sys/time.h>
+
+#include <errno.h>
+#include <unistd.h>
+#include <pthread.h>
+
+using namespace std;
 
 //http://pubs.opengroup.org/onlinepubs/007908799/xsh/pthread_cond_init.html
 // http://pubs.opengroup.org/onlinepubs/007908799/xsh/pthread_mutex_init.html
@@ -37,7 +51,7 @@ int Semaphore::P() {
     if (ret != 0) {return ret;}
   }
 
-  ret = p_thread_mutex_unlock(&m);
+  ret = pthread_mutex_unlock(&m);
   
   return ret;
 }
@@ -57,7 +71,7 @@ int Semaphore::V() {
     if (ret != 0) {return ret;}
   }
 
-  ret = p_thread_mutex_unlock(&m);
+  ret = pthread_mutex_unlock(&m);
   
   return ret;
 }

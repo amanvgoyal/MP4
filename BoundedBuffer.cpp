@@ -1,4 +1,6 @@
-#include "BoundedBuffer.h"
+  #include "BoundedBuffer.h"
+#include "semaphore.h"
+
 #include <iostream>
 
 using namespace std;
@@ -10,24 +12,24 @@ BoundedBuffer::BoundedBuffer(int b) {
 }
 
 void BoundedBuffer::add(string s) {
-  empty.P();
-  mutex.P();
+  empty->P();
+  mutex->P();
   data.push_back(s);
-  mutex.V();
-  full.V();
+  mutex->V();
+  full->V();
 }
 
 string BoundedBuffer::remove() {
   string s = ""; 
-
-  full.P();
-  mutex.P();
+  
+  full->P();
+  mutex->P();
 
   s = data[0];
   data.erase(data.begin());
   
-  mutex.V();
-  empty.V();
-
+  mutex->V();
+  empty->V();
+  
   return s;
 }
