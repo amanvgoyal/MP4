@@ -32,6 +32,7 @@
 
 #include <errno.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "reqchannel.h"
 #include "BoundedBuffer.h"

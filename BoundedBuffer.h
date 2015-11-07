@@ -12,9 +12,9 @@ class BoundedBuffer {
   std::string remove();
 
  private:
-  Semaphore empty;
-  Semaphore full;
-  Semaphore mutex;
+  Semaphore* empty;
+  Semaphore* full;
+  Semaphore* mutex;
   
   std::vector<std::string> data;
 };
