@@ -67,15 +67,16 @@ BoundedBuffer* joe_buf;
 BoundedBuffer* jane_buf;
 BoundedBuffer* john_buf;
 
-pthread_t joe_req;
+/*pthread_t joe_req;
 pthread_t jane_req;
 pthread_t john_req;
 	
 pthread_t joe_stat;
 pthread_t jane_stat;
 pthread_t john_stat;
+*/
 	
-void show_histogram (map<int, int> m, string name){
+void show_hist (map<int, int> m, string name){
   cout << name << "'s histogram" << endl;
   for (auto x : m) {
     cout << '(' << x.first << ", " << x.second << ')' << endl;
@@ -86,7 +87,7 @@ void* req_thread (void* person){
   int requester = *((int*) person);
   string delivery;
 
-  for(int i = 0; i < n; i++) {
+  for(int i = 0; i < n; ++i) {
       if(requester == 0) {
 	++joe_req_ct;
 	delivery = "data joe";
@@ -184,6 +185,14 @@ int main(int argc, char * argv[]) {
   jane_buf = new BoundedBuffer(b);
   john_buf = new BoundedBuffer(b);
 
+  pthread_t joe_req;
+  pthread_t jane_req;
+  pthread_t john_req;
+	
+  pthread_t joe_stat;
+  pthread_t jane_stat;
+  pthread_t john_stat;
+
   pthread_t* workers[w];
   
   int* joe_id = new int(0);
@@ -192,7 +201,7 @@ int main(int argc, char * argv[]) {
   
   const char **farg = new const char*[0]; // nothing in here
   int pid = fork();
-  if (pid == 0) {execv("./dataserver", (char**) farg);}
+  if (pid != 0 && pid != -1) {execv("./dataserver", (char**) farg);}
   
   else {
     cout << "Client started" << endl;
@@ -207,17 +216,17 @@ int main(int argc, char * argv[]) {
 
     cout << "Beginning creation of joe's threads" << endl;
     pthread_create(&joe_req, NULL, req_thread, (void*) joe_id);
-    pthread_create(&joe_stat, NULL, stat_thread, (void*) joe_id);
+    //pthread_create(&joe_stat, NULL, stat_thread, (void*) joe_id);
     cout << "Finished making joe's threads" << endl;
 
     cout << "Beginning creation of jane's threads" << endl;
     pthread_create(&jane_req, NULL, req_thread, (void*) jane_id);
-    pthread_create(&jane_stat, NULL, stat_thread, (void*) jane_id);
+    //pthread_create(&jane_stat, NULL, stat_thread, (void*) jane_id);
     cout << "Finished making jane's threads" << endl;
 
     cout << "Beginning creation of john's threads" << endl;
     pthread_create(&john_req, NULL, req_thread, (void*) john_id);
-    pthread_create(&john_stat, NULL, stat_thread, (void*) john_id);
+    //pthread_create(&john_stat, NULL, stat_thread, (void*) john_id);
     cout << "Finished making john's threads" << endl;
 
     cout << "Beginning to create the " << w << " worker threads." << endl;
@@ -227,6 +236,11 @@ int main(int argc, char * argv[]) {
       pthread_create(workers[i], NULL, worker_thread, (void*) chan2);
     }
     cout << "Finished making the worker theads." << endl;
+
+
+    //pthread_join(joe_req, NULL);
+    //pthread_join(jane_req, NULL);
+    //pthread_join(john_req, NULL);
 
     for (int i = 0; i < w; ++i) {
       main_buf->add("stop");
@@ -247,5 +261,14 @@ int main(int argc, char * argv[]) {
 
     // Finished
     chan.send_request("quit");
+    usleep(1000);
+
+    // Show stats
+    show_hist(joe_hist, "Joe");
+    show_hist(jane_hist, "Jane");
+    show_hist(john_hist, "John");
+
+    return 0;
   }
+  return -1;
 }

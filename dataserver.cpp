@@ -13,7 +13,7 @@
 /* DEFINES */
 /*--------------------------------------------------------------------------*/
 
-    /* -- (none) -- */
+/* -- (none) -- */
 
 /*--------------------------------------------------------------------------*/
 /* INCLUDES */
@@ -39,13 +39,13 @@ using namespace std;
 /* DATA STRUCTURES */ 
 /*--------------------------------------------------------------------------*/
 
-    /* -- (none) -- */
+/* -- (none) -- */
 
 /*--------------------------------------------------------------------------*/
 /* CONSTANTS */
 /*--------------------------------------------------------------------------*/
 
-    /* -- (none) -- */
+/* -- (none) -- */
 
 /*--------------------------------------------------------------------------*/
 /* VARIABLES */
@@ -64,9 +64,9 @@ void handle_process_loop(RequestChannel & _channel);
 /*--------------------------------------------------------------------------*/
 
 string int2string(int number) {
-   stringstream ss;//create a stringstream
-   ss << number;//add number to the stream
-   return ss.str();//return a string with the contents of the stream
+  stringstream ss;//create a stringstream
+  ss << number;//add number to the stream
+  return ss.str();//return a string with the contents of the stream
 }
 
 /*--------------------------------------------------------------------------*/
@@ -181,4 +181,3 @@ int main(int argc, char * argv[]) {
   handle_process_loop(control_channel);
 
 }
-
