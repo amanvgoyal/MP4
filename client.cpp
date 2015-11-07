@@ -107,6 +107,7 @@ void* req_thread (void* person){
 }
 
 void* worker_thread(void* req_channel){
+  cout << "in worker thread" << endl;
   RequestChannel* chan = (RequestChannel*) req_channel;
   string removal;
   string to_add;
@@ -118,6 +119,7 @@ void* worker_thread(void* req_channel){
       break; ///neeeeeeeeeeeeeeeeeeeeeeeeeeeeeded?
     }		
 
+    cout << "sending: " << removal << " to server" << endl;
     to_add = chan->send_request(removal);
     
     if (removal == "data joe") {joe_buf->add(to_add);}
@@ -181,9 +183,9 @@ int main(int argc, char * argv[]) {
 
   // App code here
   main_buf = new BoundedBuffer(b);
-  joe_buf = new BoundedBuffer(b);
-  jane_buf = new BoundedBuffer(b);
-  john_buf = new BoundedBuffer(b);
+  joe_buf = new BoundedBuffer(b/3); // b/3 noted on piazza
+  jane_buf = new BoundedBuffer(b/3);
+  john_buf = new BoundedBuffer(b/3); 
 
   pthread_t joe_req;
   pthread_t jane_req;
@@ -195,7 +197,7 @@ int main(int argc, char * argv[]) {
 
   pthread_t* workers[w];
   
-  int* joe_id = new int(0);
+  int* joe_id = new int(0); 
   int* jane_id = new int(1);
   int* john_id = new  int(2);
   
@@ -216,17 +218,17 @@ int main(int argc, char * argv[]) {
 
     cout << "Beginning creation of joe's threads" << endl;
     pthread_create(&joe_req, NULL, req_thread, (void*) joe_id);
-    //pthread_create(&joe_stat, NULL, stat_thread, (void*) joe_id);
+    pthread_create(&joe_stat, NULL, stat_thread, (void*) joe_id);
     cout << "Finished making joe's threads" << endl;
 
     cout << "Beginning creation of jane's threads" << endl;
     pthread_create(&jane_req, NULL, req_thread, (void*) jane_id);
-    //pthread_create(&jane_stat, NULL, stat_thread, (void*) jane_id);
+    pthread_create(&jane_stat, NULL, stat_thread, (void*) jane_id);
     cout << "Finished making jane's threads" << endl;
 
     cout << "Beginning creation of john's threads" << endl;
     pthread_create(&john_req, NULL, req_thread, (void*) john_id);
-    //pthread_create(&john_stat, NULL, stat_thread, (void*) john_id);
+    pthread_create(&john_stat, NULL, stat_thread, (void*) john_id);
     cout << "Finished making john's threads" << endl;
 
     cout << "Beginning to create the " << w << " worker threads." << endl;
@@ -261,9 +263,10 @@ int main(int argc, char * argv[]) {
 
     // Finished
     chan.send_request("quit");
-    usleep(1000);
+    usleep(10000);
 
     // Show stats
+    cout << "showing histograms" << endl;
     show_hist(joe_hist, "Joe");
     show_hist(jane_hist, "Jane");
     show_hist(john_hist, "John");
