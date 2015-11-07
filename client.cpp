@@ -86,8 +86,7 @@ void* req_thread (void* person){
   int requester = *((int*) person);
   string delivery;
 
-  for(int i = 0; i < n; i++)
-    {
+  for(int i = 0; i < n; i++) {
       if(requester == 0) {
 	++joe_req_ct;
 	delivery = "data joe";
@@ -97,15 +96,13 @@ void* req_thread (void* person){
 	delivery = "data jane";
       }
       else if (requester == 2) {
-	{
-	  ++john_req_ct;
-	  delivery = "data john";
-	}
-				
-	main_buf->add(delivery);
+	++john_req_ct;
+	delivery = "data john";
       }
-      cout << "Requester " << requester << " is done." << endl;
-    }
+				
+      main_buf->add(delivery);
+  }
+  cout << "Requester " << requester << " is done." << endl;
 }
 
 void* worker_thread(void* req_channel){
@@ -136,17 +133,17 @@ void* stat_thread(void* person_id){
   for(int i = 0 ; i < n ; ++i){
     if(req_id == 0){
       removal = joe_buf->remove();
-      //histo_joe[atoi(r.c_str())]+=1;
+
       ++joe_hist[atoi(removal.c_str())];
     }
     else if(req_id == 1){
       removal = jane_buf->remove();
-      //histo_jane[atoi(r.c_str())]+=1;
+
       ++jane_hist[atoi(removal.c_str())];
     }
     else if(req_id == 2){
       removal = john_buf->remove();
-      //histo_jane[atoi(r.c_str())]+=1;
+
       ++john_hist[atoi(removal.c_str())];
     }
 	
@@ -234,7 +231,6 @@ int main(int argc, char * argv[]) {
     for (int i = 0; i < w; ++i) {
       main_buf->add("stop");
     }
-
 
     // Begin joining all threads
     for (int i = 0; i < w; ++i) {

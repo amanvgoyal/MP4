@@ -11,6 +11,12 @@ BoundedBuffer::BoundedBuffer(int b) {
   mutex = new Semaphore(1);
 }
 
+BoundedBuffer::~BoundedBuffer() {
+  delete empty;
+  delete full;
+  delete mutex;
+}
+
 void BoundedBuffer::add(string s) {
   empty->P();
   mutex->P();

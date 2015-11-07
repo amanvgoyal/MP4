@@ -8,6 +8,7 @@
 class BoundedBuffer {
  public:
   BoundedBuffer(int);
+  ~BoundedBuffer();
   void add(std::string);
   std::string remove();
 

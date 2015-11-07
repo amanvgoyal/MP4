@@ -43,13 +43,14 @@ int Semaphore::P() {
   ret = pthread_mutex_lock(&m);
   if (ret != 0) {return ret;}
 
-  if (value >= 0) {--value;}
+    if (value >= 0) {--value;}
   
   // block process until val is >= 1
   while (value < 0) {
     ret = pthread_cond_wait(&c, &m);
     if (ret != 0) {return ret;}
   }
+  //  --value;
 
   ret = pthread_mutex_unlock(&m);
   
