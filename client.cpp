@@ -48,18 +48,20 @@
 using namespace std;
 
 // Globals
-int n = 10000; // number of request threads
-int w = 50; // number of worker threads
+
+// For cmdline ops
+int n = 10; // number of request threads
+int w = 5; // number of worker threads
 int b = 100; //buffer size
 int c;
-
-int joe_req_ct = 0;
-int jane_req_ct = 0;
-int john_req_ct = 0;
 
 map<int, int> joe_hist;
 map<int, int> jane_hist;
 map<int, int> john_hist;
+
+int joe_req_ct = 0;
+int jane_req_ct = 0;
+int john_req_ct = 0;
 
 BoundedBuffer* main_buf;
 
@@ -83,12 +85,29 @@ void show_hist (map<int, int> m, string name){
   }
 }
 	
-void* req_thread (void* person){
-  int requester = *((int*) person);
+void* req_thread (void* id){
+  int requester = *((int*) id);
   string delivery;
 
   for(int i = 0; i < n; ++i) {
-      if(requester == 0) {
+    switch (requester) {
+    case 0:
+      delivery = "data joe";
+      ++joe_req_ct;
+      break;
+    case 1:
+      delivery = "data jane";
+      ++jane_req_ct;
+      break;
+    case 2:
+      delivery = "data john";
+      ++john_req_ct;
+      break;
+    default:
+      cerr << "Somehow we got an invalid request id!" << endl;
+      break;
+    }
+    /*  if(requester == 0) {
 	++joe_req_ct;
 	delivery = "data joe";
       }
@@ -99,7 +118,7 @@ void* req_thread (void* person){
       else if (requester == 2) {
 	++john_req_ct;
 	delivery = "data john";
-      }
+	}*/
 				
       main_buf->add(delivery);
   }
@@ -107,7 +126,7 @@ void* req_thread (void* person){
 }
 
 void* worker_thread(void* req_channel){
-  cout << "in worker thread" << endl;
+  // This is how tanzir said to do it
   RequestChannel* chan = (RequestChannel*) req_channel;
   string removal;
   string to_add;
@@ -115,11 +134,9 @@ void* worker_thread(void* req_channel){
   while(true){
     removal = main_buf->remove();
 
-    if(removal == "stop"){
-      break; ///neeeeeeeeeeeeeeeeeeeeeeeeeeeeeded?
-    }		
+    if(removal == "stop") {break;}		
 
-    cout << "sending: " << removal << " to server" << endl;
+    cout << "Sending: " << removal << " to server" << endl;
     to_add = chan->send_request(removal);
     
     if (removal == "data joe") {joe_buf->add(to_add);}
@@ -130,28 +147,42 @@ void* worker_thread(void* req_channel){
   chan->send_request("quit");
 }
 	
-void* stat_thread(void* person_id){
-  int req_id = *((int*)person_id);
+void* stat_thread(void* id){
+  int requester = *((int*) id);
   string removal;
   for(int i = 0 ; i < n ; ++i){
-    if(req_id == 0){
+    switch(requester) {
+    case 0:
+      removal = joe_buf->remove();
+      ++joe_hist[atoi(removal.c_str())];
+      break;
+    case 1:
+      removal = jane_buf->remove();
+      ++jane_hist[atoi(removal.c_str())];
+      break;
+    case 2:
+      removal = john_buf->remove();
+      ++john_hist[atoi(removal.c_str())];
+      break;
+    }
+    /*if(requester == 0){
       removal = joe_buf->remove();
 
       ++joe_hist[atoi(removal.c_str())];
     }
-    else if(req_id == 1){
+    else if(requester == 1){
       removal = jane_buf->remove();
 
       ++jane_hist[atoi(removal.c_str())];
     }
-    else if(req_id == 2){
+    else if(requester == 2){
       removal = john_buf->remove();
 
       ++john_hist[atoi(removal.c_str())];
-    }
+      }*/
 	
   }
-  cout << "stat thread finished : " << req_id << endl;
+  cout << "Person " << requester << "'s stats thread is done" << endl;
 }
 	
 /*--------------------------------------------------------------------------*/
@@ -183,6 +214,7 @@ int main(int argc, char * argv[]) {
 
   // App code here
   main_buf = new BoundedBuffer(b);
+
   joe_buf = new BoundedBuffer(b/3); // b/3 noted on piazza
   jane_buf = new BoundedBuffer(b/3);
   john_buf = new BoundedBuffer(b/3); 
@@ -236,6 +268,7 @@ int main(int argc, char * argv[]) {
       string req_name = chan.send_request("newthread");
       RequestChannel* chan2 = new RequestChannel(req_name, RequestChannel::CLIENT_SIDE);
       pthread_create(&workers[i], NULL, worker_thread, (void*) chan2);
+      //usleep(100000);
     }
     cout << "Finished making the worker theads." << endl;
 
