@@ -195,7 +195,7 @@ int main(int argc, char * argv[]) {
   pthread_t jane_stat;
   pthread_t john_stat;
 
-  pthread_t* workers[w];
+  pthread_t workers[w];
   
   int* joe_id = new int(0); 
   int* jane_id = new int(1);
@@ -235,7 +235,7 @@ int main(int argc, char * argv[]) {
     for (int i = 0; i < w; ++i) {
       string req_name = chan.send_request("newthread");
       RequestChannel* chan2 = new RequestChannel(req_name, RequestChannel::CLIENT_SIDE);
-      pthread_create(workers[i], NULL, worker_thread, (void*) chan2);
+      pthread_create(&workers[i], NULL, worker_thread, (void*) chan2);
     }
     cout << "Finished making the worker theads." << endl;
 
@@ -250,7 +250,7 @@ int main(int argc, char * argv[]) {
 
     // Begin joining all threads
     for (int i = 0; i < w; ++i) {
-      pthread_join(*workers[i], NULL);
+      pthread_join(workers[i], NULL);
     }
 
     pthread_join(joe_req, NULL);
