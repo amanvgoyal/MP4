@@ -9,6 +9,8 @@
    Simple client main program for MP3 in CSCE 313
 */
 
+/* Refferd to the code of alan chtenberg at https://github.com/alanachtenberg/CSCE-313/blob/master/MP3/client.C */
+
 /*--------------------------------------------------------------------------*/
 /* DEFINES */
 /*--------------------------------------------------------------------------*/
@@ -53,13 +55,9 @@ int w = 5; // number of worker threads
 int b = 100; //buffer size
 int c;
 
-//map<int, int> joe_hist;
-//map<int, int> jane_hist;
-//map<int, int> john_hist;
-
-int joe_hist[100];
-int jane_hist[100];
-int john_hist[100];
+map<int, int> joe_hist;
+map<int, int> jane_hist;
+map<int, int> john_hist;
 
 int joe_req_ct = 0;
 int jane_req_ct = 0;
@@ -70,14 +68,20 @@ BoundedBuffer* main_buf;
 BoundedBuffer* joe_buf;
 BoundedBuffer* jane_buf;
 BoundedBuffer* john_buf;
+
+/*pthread_t joe_req;
+pthread_t jane_req;
+pthread_t john_req;
 	
-//void show_hist (map<int, int> m, string name){
-void show_hist(int h[], string name) {
+pthread_t joe_stat;
+pthread_t jane_stat;
+pthread_t john_stat;
+*/
+	
+void show_hist (map<int, int> m, string name){
   cout << name << "'s histogram" << endl;
-  //for (auto x : m) {
-  for (int i = 0; i < 100; ++i) {
-    //cout << '(' << x.first << ", " << x.second << ')' << endl;
-    cout << '(' << i << ", " << h[i] << ')' << endl;
+  for (auto x : m) {
+    cout << '(' << x.first << ", " << x.second << ')' << endl;
   }
 }
 	
@@ -103,9 +107,22 @@ void* req_thread (void* id){
       cerr << "Somehow we got an invalid request id!" << endl;
       break;
     }
-    main_buf->add(delivery);
+    /*  if(requester == 0) {
+	++joe_req_ct;
+	delivery = "data joe";
+      }
+      else if (requester == 1) {
+	++jane_req_ct;
+	delivery = "data jane";
+      }
+      else if (requester == 2) {
+	++john_req_ct;
+	delivery = "data john";
+	}*/
+				
+      main_buf->add(delivery);
   }
-  //cout << "Requester " << requester << " is done." << endl;
+  cout << "Requester " << requester << " is done." << endl;
 }
 
 void* worker_thread(void* req_channel){
@@ -118,11 +135,11 @@ void* worker_thread(void* req_channel){
     removal = main_buf->remove();
 
     if(removal == "stop") {
-      //cout << "WORKER STOPPING" << endl;
+      cout << "WORKER STOPPING" << endl;
       break;
     }		
 
-    //cout << "Sending: " << removal << " to server" << endl;
+    cout << "Sending: " << removal << " to server" << endl;
     to_add = chan->send_request(removal);
     
     if (removal == "data joe") {joe_buf->add(to_add);}
@@ -151,8 +168,24 @@ void* stat_thread(void* id){
       ++john_hist[atoi(removal.c_str())];
       break;
     }
+    /*if(requester == 0){
+      removal = joe_buf->remove();
+
+      ++joe_hist[atoi(removal.c_str())];
+    }
+    else if(requester == 1){
+      removal = jane_buf->remove();
+
+      ++jane_hist[atoi(removal.c_str())];
+    }
+    else if(requester == 2){
+      removal = john_buf->remove();
+
+      ++john_hist[atoi(removal.c_str())];
+      }*/
+	
   }
-  //cout << "Person " << requester << "'s stats thread is done" << endl;
+  cout << "Person " << requester << "'s stats thread is done" << endl;
 }
 	
 /*--------------------------------------------------------------------------*/
@@ -237,7 +270,6 @@ int main(int argc, char * argv[]) {
     for (int i = 0; i < w; ++i) {
       string req_name = chan.send_request("newthread");
       //RequestChannel* chan2 = new RequestChannel(req_name, RequestChannel::CLIENT_SIDE);
-      //pthread_create(&workers[i], NULL, worker_thread, (void*) chan2);
       pthread_create(&workers[i], NULL, worker_thread, (void*) (new RequestChannel(req_name, RequestChannel::CLIENT_SIDE)));
       //usleep(100000);
     }
@@ -267,7 +299,7 @@ int main(int argc, char * argv[]) {
 
     // Finished
     chan.send_request("quit");
-    //usleep(100000);
+    usleep(100000);
    
     // Show stats
     cout << "showing histograms" << endl;
